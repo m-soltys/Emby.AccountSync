@@ -1,20 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using MediaBrowser.Controller.Library;
-using MediaBrowser.Controller.Plugins;
-using MediaBrowser.Controller.Session;
-using MediaBrowser.Model.Logging;
-
-namespace AccountSync
+﻿namespace AccountSync
 {
+    using System;
+    using System.Linq;
+    using MediaBrowser.Controller.Library;
+    using MediaBrowser.Controller.Plugins;
+    using MediaBrowser.Controller.Session;
+    using MediaBrowser.Model.Logging;
+
     public class ServerEntryPoint : IServerEntryPoint
     {
         public static ServerEntryPoint Instance { get; set; }
-        private ISessionManager SessionManager { get; set; }
-        private IUserManager UserManager { get; set; }
-        private ILogger Log { get; set; }
+        private ISessionManager SessionManager { get; }
+        private IUserManager UserManager { get; }
+        private ILogger Log { get; }
+
         public ServerEntryPoint(ISessionManager sesMan, IUserManager userMan, ILogManager logManager)
         {
             Instance = this;
@@ -22,22 +21,18 @@ namespace AccountSync
             UserManager = userMan;
             Log = logManager.GetLogger(Plugin.Instance.Name);
             SessionManager.PlaybackStopped += SessionManager_PlaybackStopped;
-
         }
 
         private void SessionManager_PlaybackStopped(object sender, PlaybackStopEventArgs e)
         {
-           
-            if (!Plugin.Instance.Configuration.SyncList.Exists(user => user.SyncFromAccount == e.Session.UserId)) return;
-            
-            var sync = Plugin.Instance.Configuration.SyncList.FirstOrDefault(user => user.SyncFromAccount == e.Session.UserId);
+            var accountSyncs = Plugin.Instance.Configuration.SyncList.Where(user => user.SyncFromAccount == e.Session.UserId).ToList();
 
-            var syncToUser   = UserManager.GetUserById(sync.SyncToAccount);
-            
-            Synchronize.SynchronizePlayState(syncToUser, e.Item, e.PlaybackPositionTicks.Value);
-
+            foreach (var syncToUser in accountSyncs.Select(sync => UserManager.GetUserById(sync.SyncToAccount)))
+            {
+                Synchronize.SynchronizePlayState(syncToUser, e.Item, e.PlaybackPositionTicks, e.PlayedToCompletion);
+            }
         }
-        
+
         public void Dispose()
         {
             throw new NotImplementedException();
