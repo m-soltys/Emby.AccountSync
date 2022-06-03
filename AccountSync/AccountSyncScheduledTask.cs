@@ -42,8 +42,8 @@
             {
                 foreach (var syncProfile in Plugin.Instance.Configuration.SyncList)
                 {
-                    var syncToUser = UserManager.GetUserById(syncProfile.SyncToAccount); //Sync To
-                    var syncFromUser = UserManager.GetUserById(syncProfile.SyncFromAccount); //Sync From
+                    var syncToUser = UserManager.GetUserById(syncProfile.SyncToAccount);
+                    var syncFromUser = UserManager.GetUserById(syncProfile.SyncFromAccount);
 
                     var queryResultIds = LibraryManager.GetInternalItemIds(new InternalItemsQuery { IncludeItemTypes = new[] { "Movie", "Episode" } });
 
